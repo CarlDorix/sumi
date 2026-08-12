@@ -13,11 +13,18 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
  * M3 Navbar with no horizontal spacer
+ *
+ * [shape] and [shadowElevation] default to the standard edge-to-edge bar. Pass a rounded shape,
+ * a shadow, and an inset [modifier] to render it as a floating bar instead — in that case set
+ * [windowInsets] to zero and apply the system insets on the modifier, so the bar floats above
+ * the gesture area rather than padding itself from within.
  *
  * @see [androidx.compose.material3.NavigationBar]
  */
@@ -28,19 +35,24 @@ fun NavigationBar(
     contentColor: Color = MaterialTheme.colorScheme.contentColorFor(containerColor),
     tonalElevation: Dp = NavigationBarDefaults.Elevation,
     windowInsets: WindowInsets = NavigationBarDefaults.windowInsets,
+    shape: Shape = RectangleShape,
+    shadowElevation: Dp = 0.dp,
+    barHeight: Dp = 80.dp,
     content: @Composable RowScope.() -> Unit,
 ) {
     androidx.compose.material3.Surface(
         color = containerColor,
         contentColor = contentColor,
         tonalElevation = tonalElevation,
+        shadowElevation = shadowElevation,
+        shape = shape,
         modifier = modifier,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(windowInsets)
-                .height(80.dp)
+                .height(barHeight)
                 .selectableGroup(),
             content = content,
         )

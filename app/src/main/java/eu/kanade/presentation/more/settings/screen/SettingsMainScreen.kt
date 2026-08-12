@@ -162,7 +162,7 @@ object SettingsMainScreen : Screen() {
         if (twoPane) replaceAll(screen) else push(screen)
     }
 
-    private data class Item(
+    internal data class Item(
         val titleRes: StringResource,
         val subtitleRes: StringResource? = null,
         val formatSubtitle: @Composable () -> String? = { subtitleRes?.let { stringResource(it) } },
@@ -170,7 +170,7 @@ object SettingsMainScreen : Screen() {
         val screen: VoyagerScreen,
     )
 
-    private val items = listOf(
+    internal val items = listOf(
         Item(
             titleRes = MR.strings.pref_category_appearance,
             subtitleRes = MR.strings.pref_appearance_summary,
@@ -202,7 +202,7 @@ object SettingsMainScreen : Screen() {
             screen = SettingsTrackingScreen,
         ),
         Item(
-            titleRes = MR.strings.browse,
+            titleRes = MR.strings.settings_sources_extensions,
             subtitleRes = MR.strings.pref_browse_summary,
             icon = Icons.Outlined.Explore,
             screen = SettingsBrowseScreen,

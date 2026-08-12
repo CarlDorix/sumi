@@ -95,6 +95,7 @@ fun MangaScreen(
 
     // For tags menu
     onTagSearch: (String) -> Unit,
+    onTagInLibrary: (String) -> Unit,
 
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
@@ -148,6 +149,7 @@ fun MangaScreen(
             onWebViewLongClicked = onWebViewLongClicked,
             onTrackingClicked = onTrackingClicked,
             onTagSearch = onTagSearch,
+            onTagInLibrary = onTagInLibrary,
             onCopyTagToClipboard = onCopyTagToClipboard,
             onFilterClicked = onFilterButtonClicked,
             onRefresh = onRefresh,
@@ -184,6 +186,7 @@ fun MangaScreen(
             onWebViewLongClicked = onWebViewLongClicked,
             onTrackingClicked = onTrackingClicked,
             onTagSearch = onTagSearch,
+            onTagInLibrary = onTagInLibrary,
             onCopyTagToClipboard = onCopyTagToClipboard,
             onFilterButtonClicked = onFilterButtonClicked,
             onRefresh = onRefresh,
@@ -225,6 +228,7 @@ private fun MangaScreenSmallImpl(
 
     // For tags menu
     onTagSearch: (String) -> Unit,
+    onTagInLibrary: (String) -> Unit,
     onCopyTagToClipboard: (tag: String) -> Unit,
 
     onFilterClicked: () -> Unit,
@@ -376,6 +380,8 @@ private fun MangaScreenSmallImpl(
                     ) {
                         MangaInfoBox(
                             isTabletUi = false,
+                            readCount = remember(state.chapters) { state.chapters.count { it.chapter.read } },
+                            totalCount = state.chapters.size,
                             appBarPadding = topPadding,
                             manga = state.manga,
                             sourceName = remember { state.source.getNameForMangaInfo() },
@@ -413,6 +419,7 @@ private fun MangaScreenSmallImpl(
                             tagsProvider = { state.manga.genre },
                             notes = state.manga.notes,
                             onTagSearch = onTagSearch,
+                            onTagInLibrary = onTagInLibrary,
                             onCopyTagToClipboard = onCopyTagToClipboard,
                             onEditNotes = onEditNotesClicked,
                         )
@@ -467,6 +474,7 @@ fun MangaScreenLargeImpl(
 
     // For tags menu
     onTagSearch: (String) -> Unit,
+    onTagInLibrary: (String) -> Unit,
     onCopyTagToClipboard: (tag: String) -> Unit,
 
     onFilterButtonClicked: () -> Unit,
@@ -612,6 +620,8 @@ fun MangaScreenLargeImpl(
                     ) {
                         MangaInfoBox(
                             isTabletUi = true,
+                            readCount = remember(state.chapters) { state.chapters.count { it.chapter.read } },
+                            totalCount = state.chapters.size,
                             appBarPadding = contentPadding.calculateTopPadding(),
                             manga = state.manga,
                             sourceName = remember { state.source.getNameForMangaInfo() },
@@ -637,6 +647,7 @@ fun MangaScreenLargeImpl(
                             tagsProvider = { state.manga.genre },
                             notes = state.manga.notes,
                             onTagSearch = onTagSearch,
+                            onTagInLibrary = onTagInLibrary,
                             onCopyTagToClipboard = onCopyTagToClipboard,
                             onEditNotes = onEditNotesClicked,
                         )

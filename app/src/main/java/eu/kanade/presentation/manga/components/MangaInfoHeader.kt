@@ -7,6 +7,7 @@ import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -62,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
@@ -86,6 +89,7 @@ import coil3.request.crossfade
 import com.mikepenz.markdown.model.markdownAnnotator
 import com.mikepenz.markdown.model.markdownAnnotatorConfig
 import com.mikepenz.markdown.utils.getUnescapedTextInNode
+import eu.kanade.presentation.components.ReadProgressBar
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.components.DropdownMenu
 import eu.kanade.tachiyomi.R
@@ -111,6 +115,8 @@ import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlin.time.Instant
 
+private const val COLLAPSED_TAG_COUNT = 6
+
 @Composable
 fun MangaInfoBox(
     isTabletUi: Boolean,
@@ -121,6 +127,8 @@ fun MangaInfoBox(
     onCoverClick: () -> Unit,
     doSearch: (query: String, global: Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    readCount: Int = 0,
+    totalCount: Int = 0,
 ) {
     Box(modifier = modifier) {
         // Backdrop
@@ -143,32 +151,58 @@ fun MangaInfoBox(
                         brush = Brush.verticalGradient(colors = backdropGradientColors),
                     )
                 }
-                .blur(4.dp)
-                .alpha(0.2f),
+                // Heavier than stock: at 4dp/0.2 the artwork was barely perceptible, so the header
+                // read as a plain box rather than belonging to the entry.
+                .blur(20.dp)
+                .alpha(0.45f),
         )
 
         // Manga & source info
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-            if (!isTabletUi) {
-                MangaAndSourceTitlesSmall(
-                    appBarPadding = appBarPadding,
-                    manga = manga,
-                    sourceName = sourceName,
-                    isStubSource = isStubSource,
-                    onCoverClick = onCoverClick,
-                    doSearch = doSearch,
-                )
-            } else {
-                MangaAndSourceTitlesLarge(
-                    appBarPadding = appBarPadding,
-                    manga = manga,
-                    sourceName = sourceName,
-                    isStubSource = isStubSource,
-                    onCoverClick = onCoverClick,
-                    doSearch = doSearch,
-                )
+            Column {
+                if (!isTabletUi) {
+                    MangaAndSourceTitlesSmall(
+                        appBarPadding = appBarPadding,
+                        manga = manga,
+                        sourceName = sourceName,
+                        isStubSource = isStubSource,
+                        onCoverClick = onCoverClick,
+                        doSearch = doSearch,
+                    )
+                } else {
+                    MangaAndSourceTitlesLarge(
+                        appBarPadding = appBarPadding,
+                        manga = manga,
+                        sourceName = sourceName,
+                        isStubSource = isStubSource,
+                        onCoverClick = onCoverClick,
+                        doSearch = doSearch,
+                    )
+                }
+
+                if (totalCount > 0) {
+                    MangaReadProgress(readCount = readCount, totalCount = totalCount)
+                }
             }
         }
+    }
+}
+
+/**
+ * How far through the entry you are, in the same visual language as the library's cover bars.
+ */
+@Composable
+private fun MangaReadProgress(readCount: Int, totalCount: Int) {
+    val fraction = (readCount.toFloat() / totalCount).coerceIn(0f, 1f)
+
+    Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp)) {
+        Text(
+            text = "$readCount / $totalCount",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(6.dp))
+        ReadProgressBar(progress = fraction)
     }
 }
 
@@ -253,6 +287,7 @@ fun ExpandableMangaDescription(
     tagsProvider: () -> List<String>?,
     notes: String,
     onTagSearch: (String) -> Unit,
+    onTagInLibrary: (String) -> Unit,
     onCopyTagToClipboard: (tag: String) -> Unit,
     onEditNotes: () -> Unit,
     modifier: Modifier = Modifier,
@@ -297,6 +332,13 @@ fun ExpandableMangaDescription(
                         },
                     )
                     DropdownMenuItem(
+                        text = { Text(text = stringResource(MR.strings.genre_in_your_library)) },
+                        onClick = {
+                            onTagInLibrary(tagSelected)
+                            showMenu = false
+                        },
+                    )
+                    DropdownMenuItem(
                         text = { Text(text = stringResource(MR.strings.action_copy_to_clipboard)) },
                         onClick = {
                             onCopyTagToClipboard(tagSelected)
@@ -304,37 +346,23 @@ fun ExpandableMangaDescription(
                         },
                     )
                 }
-                if (expanded) {
-                    FlowRow(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
-                    ) {
-                        tags.forEach {
-                            TagsChip(
-                                modifier = DefaultTagChipModifier,
-                                text = it,
-                                onClick = {
-                                    tagSelected = it
-                                    showMenu = true
-                                },
-                            )
-                        }
-                    }
-                } else {
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = MaterialTheme.padding.medium),
-                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
-                    ) {
-                        items(items = tags) {
-                            TagsChip(
-                                modifier = DefaultTagChipModifier,
-                                text = it,
-                                onClick = {
-                                    tagSelected = it
-                                    showMenu = true
-                                },
-                            )
-                        }
+                // Always wrapped rather than a horizontally scrolling strip when collapsed — that
+                // strip hid most tags behind a gesture nobody discovers. Collapsed just shows
+                // fewer of them, so a heavily tagged entry doesn't push the chapters off screen.
+                val visibleTags = if (expanded) tags else tags.take(COLLAPSED_TAG_COUNT)
+                FlowRow(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
+                ) {
+                    visibleTags.forEach {
+                        TagsChip(
+                            modifier = DefaultTagChipModifier,
+                            text = it,
+                            onClick = {
+                                tagSelected = it
+                                showMenu = true
+                            },
+                        )
                     }
                 }
             }

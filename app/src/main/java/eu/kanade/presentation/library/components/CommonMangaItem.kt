@@ -64,6 +64,11 @@ private val ContinueReadingButtonListSpacing = 8.dp
 
 private const val GRID_SELECTED_COVER_ALPHA = 0.76f
 
+private val ReadProgressBarHeight = 3.dp
+
+/** Matches [MaterialTheme.shapes] medium, which is what covers are clipped to. */
+private val CoverCornerRadius = 12.dp
+
 /**
  * Layout of grid list item with title overlaying the cover.
  * Accepts null [title] for a cover-only view.
@@ -77,6 +82,7 @@ fun MangaCompactGridItem(
     title: String? = null,
     onClickContinueReading: (() -> Unit)? = null,
     coverAlpha: Float = 1f,
+    readProgress: Float? = null,
     coverBadgeStart: @Composable (RowScope.() -> Unit)? = null,
     coverBadgeEnd: @Composable (RowScope.() -> Unit)? = null,
 ) {
@@ -96,6 +102,7 @@ fun MangaCompactGridItem(
             },
             badgesStart = coverBadgeStart,
             badgesEnd = coverBadgeEnd,
+            readProgress = readProgress,
             content = {
                 if (title != null) {
                     CoverTextOverlay(
@@ -127,14 +134,15 @@ private fun BoxScope.CoverTextOverlay(
 ) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 4.dp))
+            .clip(RoundedCornerShape(bottomStart = CoverCornerRadius, bottomEnd = CoverCornerRadius))
             .background(
                 Brush.verticalGradient(
                     0f to Color.Transparent,
-                    1f to Color(0xAA000000),
+                    0.5f to Color(0x40000000),
+                    1f to Color(0xCC000000),
                 ),
             )
-            .fillMaxHeight(0.33f)
+            .fillMaxHeight(0.45f)
             .fillMaxWidth()
             .align(Alignment.BottomCenter),
     )
@@ -182,6 +190,7 @@ fun MangaComfortableGridItem(
     isSelected: Boolean = false,
     titleMaxLines: Int = 2,
     coverAlpha: Float = 1f,
+    readProgress: Float? = null,
     coverBadgeStart: (@Composable RowScope.() -> Unit)? = null,
     coverBadgeEnd: (@Composable RowScope.() -> Unit)? = null,
     onClickContinueReading: (() -> Unit)? = null,
@@ -203,6 +212,7 @@ fun MangaComfortableGridItem(
                 },
                 badgesStart = coverBadgeStart,
                 badgesEnd = coverBadgeEnd,
+                readProgress = readProgress,
                 content = {
                     if (onClickContinueReading != null) {
                         ContinueReadingButton(
@@ -236,6 +246,7 @@ private fun MangaGridCover(
     cover: @Composable BoxScope.() -> Unit = {},
     badgesStart: (@Composable RowScope.() -> Unit)? = null,
     badgesEnd: (@Composable RowScope.() -> Unit)? = null,
+    readProgress: Float? = null,
     content: @Composable (BoxScope.() -> Unit)? = null,
 ) {
     Box(
@@ -245,6 +256,9 @@ private fun MangaGridCover(
     ) {
         cover()
         content?.invoke(this)
+        if (readProgress != null) {
+            ReadProgressBar(progress = readProgress)
+        }
         if (badgesStart != null) {
             BadgeGroup(
                 modifier = Modifier
@@ -262,6 +276,31 @@ private fun MangaGridCover(
                 content = badgesEnd,
             )
         }
+    }
+}
+
+/**
+ * Thin read-progress bar pinned to the bottom edge of a cover.
+ *
+ * Drawn after [MangaGridCover]'s content so it sits above the title scrim, and sized in the
+ * cover's own space so it costs no extra height in the grid.
+ */
+@Composable
+private fun BoxScope.ReadProgressBar(progress: Float) {
+    Box(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth()
+            .height(ReadProgressBarHeight)
+            .clip(RoundedCornerShape(bottomStart = CoverCornerRadius, bottomEnd = CoverCornerRadius))
+            .background(Color.Black.copy(alpha = 0.45f)),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(progress)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.primary),
+        )
     }
 }
 

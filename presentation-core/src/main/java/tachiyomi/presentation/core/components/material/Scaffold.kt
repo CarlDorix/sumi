@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.MutableWindowInsets
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import tachiyomi.presentation.core.util.plus
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.exclude
@@ -127,12 +128,24 @@ fun Scaffold(
         color = containerColor,
         contentColor = contentColor,
     ) {
+        val floatingNavBarPadding = LocalFloatingNavBarPadding.current
+
         ScaffoldLayout(
             fabPosition = floatingActionButtonPosition,
             topBar = { topBar(topBarScrollBehavior) },
             startBar = startBar,
             bottomBar = bottomBar,
-            content = content,
+            // Tachiyomi: reserve room for an overlaid floating navigation bar, which the layout
+            // itself knows nothing about because it isn't a bottomBar.
+            content = { padding ->
+                content(
+                    if (floatingNavBarPadding > 0.dp) {
+                        padding + PaddingValues(bottom = floatingNavBarPadding)
+                    } else {
+                        padding
+                    },
+                )
+            },
             snackbar = snackbarHost,
             contentWindowInsets = remainingWindowInsets,
             fab = floatingActionButton,

@@ -9,12 +9,18 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
@@ -24,10 +30,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -41,23 +49,24 @@ import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
 import eu.kanade.tachiyomi.ui.history.HistoryTab
 import eu.kanade.tachiyomi.ui.library.LibraryTab
 import eu.kanade.tachiyomi.ui.manga.MangaScreen
-import eu.kanade.tachiyomi.ui.more.MoreTab
-import eu.kanade.tachiyomi.ui.updates.UpdatesTab
+import eu.kanade.tachiyomi.ui.more.SettingsTab
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import soup.compose.material.motion.animation.materialFadeThroughIn
 import soup.compose.material.motion.animation.materialFadeThroughOut
-import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.components.material.LocalFloatingNavBarPadding
 import tachiyomi.presentation.core.components.material.NavigationBar
 import tachiyomi.presentation.core.components.material.NavigationRail
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.pluralStringResource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+
+private val FloatingNavBarHeight = 72.dp
+private val FloatingNavBarInset = 8.dp
 
 object HomeScreen : Screen() {
 
@@ -72,25 +81,37 @@ object HomeScreen : Screen() {
     private const val TabNavigatorKey = "HomeTabs"
 
     private val TABS = listOf(
-        LibraryTab,
-        UpdatesTab,
-        HistoryTab,
+        HomeTab,
         BrowseTab,
-        MoreTab,
+        SettingsTab,
     )
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         TabNavigator(
-            tab = LibraryTab,
+            tab = HomeTab,
             key = TabNavigatorKey,
         ) { tabNavigator ->
             // Provide usable navigator to content screen
             CompositionLocalProvider(LocalNavigator provides navigator) {
+                val isTablet = isTabletUi()
+                val bottomNavVisible by produceState(initialValue = true) {
+                    showBottomNavEvent.receiveAsFlow().collectLatest { value = it }
+                }
+                // The bar is drawn as an overlay, so the Scaffold reserves no room for it. Screens
+                // below add this much bottom padding themselves, which is what lets their content
+                // scroll behind the translucent surface instead of stopping above it.
+                val floatingNavPadding = if (isTablet) {
+                    0.dp
+                } else {
+                    FloatingNavBarHeight + FloatingNavBarInset * 2 +
+                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                }
+
                 Scaffold(
                     startBar = {
-                        if (isTabletUi()) {
+                        if (isTablet) {
                             NavigationRail {
                                 TABS.fastForEach {
                                     NavigationRailItem(it)
@@ -98,50 +119,71 @@ object HomeScreen : Screen() {
                             }
                         }
                     },
-                    bottomBar = {
-                        if (!isTabletUi()) {
-                            val bottomNavVisible by produceState(initialValue = true) {
-                                showBottomNavEvent.receiveAsFlow().collectLatest { value = it }
+                    contentWindowInsets = WindowInsets(0),
+                ) { contentPadding ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .padding(contentPadding)
+                                .consumeWindowInsets(contentPadding),
+                        ) {
+                            CompositionLocalProvider(
+                                LocalFloatingNavBarPadding provides floatingNavPadding,
+                            ) {
+                                AnimatedContent(
+                                    targetState = tabNavigator.current,
+                                    transitionSpec = {
+                                        materialFadeThroughIn(
+                                            initialScale = 1f,
+                                            durationMillis = TabFadeDuration,
+                                        ) togetherWith materialFadeThroughOut(durationMillis = TabFadeDuration)
+                                    },
+                                    label = "tabContent",
+                                ) {
+                                    tabNavigator.saveableState(key = "currentTab", it) {
+                                        it.Content()
+                                    }
+                                }
                             }
+                        }
+
+                        if (!isTablet) {
                             AnimatedVisibility(
                                 visible = bottomNavVisible,
                                 enter = expandVertically(),
                                 exit = shrinkVertically(),
+                                modifier = Modifier.align(Alignment.BottomCenter),
                             ) {
-                                NavigationBar {
+                                NavigationBar(
+                                    // Insets applied here rather than inside the bar so it floats
+                                    // above the gesture area instead of stretching into it.
+                                    modifier = Modifier
+                                        .windowInsetsPadding(NavigationBarDefaults.windowInsets)
+                                        .padding(horizontal = 12.dp, vertical = FloatingNavBarInset),
+                                    windowInsets = WindowInsets(0),
+                                    // Translucent so the bar reads as glass over the content now
+                                    // scrolling beneath it. No tonal overlay, or the elevation
+                                    // tint would re-opaque it.
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                        .copy(alpha = 0.88f),
+                                    tonalElevation = 0.dp,
+                                    shape = RoundedCornerShape(28.dp),
+                                    shadowElevation = 8.dp,
+                                    barHeight = FloatingNavBarHeight,
+                                ) {
                                     TABS.fastForEach {
                                         NavigationBarItem(it)
                                     }
                                 }
                             }
                         }
-                    },
-                    contentWindowInsets = WindowInsets(0),
-                ) { contentPadding ->
-                    Box(
-                        modifier = Modifier
-                            .padding(contentPadding)
-                            .consumeWindowInsets(contentPadding),
-                    ) {
-                        AnimatedContent(
-                            targetState = tabNavigator.current,
-                            transitionSpec = {
-                                materialFadeThroughIn(initialScale = 1f, durationMillis = TabFadeDuration) togetherWith
-                                    materialFadeThroughOut(durationMillis = TabFadeDuration)
-                            },
-                            label = "tabContent",
-                        ) {
-                            tabNavigator.saveableState(key = "currentTab", it) {
-                                it.Content()
-                            }
-                        }
                     }
                 }
             }
 
-            val goToLibraryTab = { tabNavigator.current = LibraryTab }
+            val goToLibraryTab = { tabNavigator.current = HomeTab }
 
-            BackHandler(enabled = tabNavigator.current != LibraryTab, onBack = goToLibraryTab)
+            BackHandler(enabled = tabNavigator.current != HomeTab, onBack = goToLibraryTab)
 
             LaunchedEffect(Unit) {
                 launch {
@@ -153,16 +195,18 @@ object HomeScreen : Screen() {
                 launch {
                     openTabEvent.receiveAsFlow().collectLatest {
                         tabNavigator.current = when (it) {
-                            is Tab.Library -> LibraryTab
-                            Tab.Updates -> UpdatesTab
-                            Tab.History -> HistoryTab
+                            // Library, History and the retired Updates screen all live inside Home
+                            // now, so every deep link that used to target them lands there.
+                            is Tab.Library -> HomeTab
+                            Tab.Updates -> HomeTab
+                            Tab.History -> HomeTab
                             is Tab.Browse -> {
                                 if (it.toExtensions) {
                                     BrowseTab.showExtension()
                                 }
                                 BrowseTab
                             }
-                            is Tab.More -> MoreTab
+                            is Tab.More -> SettingsTab
                         }
 
                         if (it is Tab.Library && it.mangaIdToOpen != null) {
@@ -238,29 +282,8 @@ object HomeScreen : Screen() {
         BadgedBox(
             badge = {
                 when {
-                    tab is UpdatesTab -> {
-                        val count by produceState(initialValue = 0) {
-                            val pref = Injekt.get<LibraryPreferences>()
-                            combine(
-                                pref.newShowUpdatesCount.changes(),
-                                pref.newUpdatesCount.changes(),
-                            ) { show, count -> if (show) count else 0 }
-                                .collectLatest { value = it }
-                        }
-                        if (count > 0) {
-                            Badge {
-                                val desc = pluralStringResource(
-                                    MR.plurals.notification_chapters_generic,
-                                    count = count,
-                                    count,
-                                )
-                                Text(
-                                    text = count.toString(),
-                                    modifier = Modifier.semantics { contentDescription = desc },
-                                )
-                            }
-                        }
-                    }
+                    // Only the extension-update badge remains; the Updates tab it used to sit
+                    // beside is gone.
                     BrowseTab::class.isInstance(tab) -> {
                         val count by produceState(initialValue = 0) {
                             Injekt.get<SourcePreferences>().extensionUpdatesCount.changes()

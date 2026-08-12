@@ -1,16 +1,15 @@
 package eu.kanade.presentation.more.settings
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import eu.kanade.presentation.components.PreferenceCard
 import eu.kanade.presentation.more.settings.screen.SearchableSettings
 import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
 import kotlinx.coroutines.delay
@@ -53,20 +52,24 @@ fun PreferenceScreen(
                     if (!preference.enabled) return@fastForEachIndexed
 
                     item {
-                        Column {
-                            PreferenceGroupHeader(title = preference.title)
-                        }
+                        PreferenceGroupHeader(title = preference.title)
                     }
-                    items(preference.preferenceItems) { item ->
-                        PreferenceItem(
-                            item = item,
-                            highlightKey = highlightKey,
-                        )
+                    // Tachiyomi: one card per group, so a long run of identical rows reads as a
+                    // handful of scannable blocks instead.
+                    item {
+                        PreferenceCard {
+                            preference.preferenceItems.forEach { groupItem ->
+                                PreferenceItem(
+                                    item = groupItem,
+                                    highlightKey = highlightKey,
+                                )
+                            }
+                        }
                     }
                     item {
-                        if (i < items.lastIndex) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                        }
+                        Spacer(
+                            modifier = Modifier.height(if (i < items.lastIndex) 12.dp else 0.dp),
+                        )
                     }
                 }
 
@@ -82,16 +85,30 @@ fun PreferenceScreen(
     }
 }
 
+/**
+ * Index of the lazy item to scroll to when settings search highlights a key.
+ *
+ * A group now emits exactly three lazy items — header, card, spacer — regardless of how many
+ * preferences it holds, so this counts emitted items rather than individual preferences. Disabled
+ * groups emit nothing and are skipped.
+ */
 private fun List<Preference>.findHighlightedIndex(highlightKey: String): Int {
-    return flatMap {
-        if (it is Preference.PreferenceGroup) {
-            buildList<String?> {
-                add(null) // Header
-                addAll(it.preferenceItems.map { groupItem -> groupItem.title })
-                add(null) // Spacer
+    var lazyIndex = 0
+    forEach { preference ->
+        when (preference) {
+            is Preference.PreferenceGroup -> {
+                if (!preference.enabled) return@forEach
+                if (preference.preferenceItems.any { it.title == highlightKey }) {
+                    // The card holding the highlighted preference.
+                    return lazyIndex + 1
+                }
+                lazyIndex += 3
             }
-        } else {
-            listOf(it.title)
+            is Preference.PreferenceItem<*, *> -> {
+                if (preference.title == highlightKey) return lazyIndex
+                lazyIndex++
+            }
         }
-    }.indexOfFirst { it == highlightKey }
+    }
+    return -1
 }

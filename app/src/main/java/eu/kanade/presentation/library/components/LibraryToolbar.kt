@@ -74,32 +74,27 @@ private fun LibraryRegularToolbar(
     val pillAlpha = if (isSystemInDarkTheme()) 0.12f else 0.08f
     SearchToolbar(
         titleContent = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = title.text,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f, false),
-                    overflow = TextOverflow.Ellipsis,
+            // Title text dropped: the Home tab chip already says "Library", and when categories
+            // are in use their own tab row names the current one. The count is information rather
+            // than repetition, so it stays.
+            if (title.numberOfManga != null) {
+                Pill(
+                    text = "${title.numberOfManga}",
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = pillAlpha),
+                    fontSize = 14.sp,
                 )
-                if (title.numberOfManga != null) {
-                    Pill(
-                        text = "${title.numberOfManga}",
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = pillAlpha),
-                        fontSize = 14.sp,
-                    )
-                }
             }
         },
         searchQuery = searchQuery,
         onChangeSearchQuery = onSearchQueryChange,
         actions = {
-            val filterTint = if (hasFilters) MaterialTheme.colorScheme.active else LocalContentColor.current
             AppBarActions(
                 listOf(
-                    AppBar.Action(
-                        title = stringResource(MR.strings.action_filter),
-                        icon = Icons.Outlined.FilterList,
-                        iconTint = filterTint,
+                    // Filter icon removed: Unread, Read and Downloaded are their own tabs on Home
+                    // now. Sort and display live in the same dialog though, so they move here
+                    // rather than disappearing with it.
+                    AppBar.OverflowAction(
+                        title = stringResource(MR.strings.library_sort_and_display),
                         onClick = onClickFilter,
                     ),
                     AppBar.OverflowAction(

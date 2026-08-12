@@ -82,9 +82,11 @@ data object HistoryTab : Tab {
                     onDismissRequest = onDismissRequest,
                     onDelete = { all ->
                         if (all) {
-                            viewModel.removeAllFromHistory(dialog.history.mangaId)
+                            dialog.histories.firstOrNull()?.let {
+                                viewModel.removeAllFromHistory(it.mangaId)
+                            }
                         } else {
-                            viewModel.removeFromHistory(dialog.history)
+                            dialog.histories.forEach(viewModel::removeFromHistory)
                         }
                     },
                 )

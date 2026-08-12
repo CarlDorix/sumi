@@ -13,6 +13,14 @@ data class LibraryItem(
 ) {
     val id: Long = libraryManga.id
 
+    /**
+     * Fraction of chapters read, or null for entries that haven't been started. Null means
+     * "draw nothing", which keeps untouched entries visually quiet.
+     */
+    val readProgress: Float? = libraryManga
+        .takeIf { it.readCount > 0 && it.totalChapters > 0 }
+        ?.let { (it.readCount.toFloat() / it.totalChapters).coerceIn(0f, 1f) }
+
     data class Badges(
         val downloadCount: Int,
         val unreadCount: Long,

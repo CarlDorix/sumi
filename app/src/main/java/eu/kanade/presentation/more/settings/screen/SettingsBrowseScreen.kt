@@ -25,7 +25,9 @@ object SettingsBrowseScreen : SearchableSettings {
 
     @ReadOnlyComposable
     @Composable
-    override fun getTitleRes() = MR.strings.browse
+    // Renamed from "Browse": that tab no longer exists, but this screen still owns extension
+    // stores and NSFW visibility, so the contents stay and only the label changes.
+    override fun getTitleRes() = MR.strings.settings_sources_extensions
 
     @Composable
     override fun getPreferences(): List<Preference> {

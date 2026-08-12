@@ -255,7 +255,8 @@ class HistoryViewModel(
 
     sealed interface Dialog {
         data object DeleteAll : Dialog
-        data class Delete(val history: HistoryWithRelations) : Dialog
+        /** Carries every entry in a grouped run, so removing a run removes all of its chapters. */
+        data class Delete(val histories: List<HistoryWithRelations>) : Dialog
         data class DuplicateManga(val manga: Manga, val duplicates: List<MangaWithChapterCount>) : Dialog
         data class ChangeCategory(
             val manga: Manga,

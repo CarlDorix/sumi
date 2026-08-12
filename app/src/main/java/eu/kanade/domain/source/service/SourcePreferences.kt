@@ -31,6 +31,18 @@ class SourcePreferences(
 
     val pinnedSources: Preference<Set<String>> = preferenceStore.getStringSet("pinned_catalogues", emptySet())
 
+    /**
+     * Newline-separated, most recent first. Stored as one string rather than a Set because
+     * recency order is the whole point and a Set does not preserve it.
+     */
+    val recentSearches: Preference<String> = preferenceStore.getString(
+        Preference.appStateKey("recent_searches"),
+        "",
+    )
+
+    /** Source feeding the search screen's popular shelf. -1 means pick one automatically. */
+    val popularShelfSource: Preference<Long> = preferenceStore.getLong("popular_shelf_source", -1)
+
     val lastUsedSource: Preference<Long> = preferenceStore.getLong(
         Preference.appStateKey("last_catalogue_source"),
         -1,

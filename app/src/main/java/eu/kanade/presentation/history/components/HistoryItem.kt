@@ -1,104 +1,132 @@
 package eu.kanade.presentation.history.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
-import eu.kanade.presentation.manga.components.MangaCover
+import eu.kanade.presentation.components.SeriesListRow
+import eu.kanade.presentation.history.HistoryRun
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
 import eu.kanade.presentation.util.formatChapterNumber
 import eu.kanade.tachiyomi.util.lang.toTimestampString
 import tachiyomi.domain.history.model.HistoryWithRelations
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
+import tachiyomi.presentation.core.i18n.pluralStringResource
 import tachiyomi.presentation.core.i18n.stringResource
 
-private val HistoryItemHeight = 96.dp
-
+/**
+ * A history row, representing either a single chapter or a whole run read back to back.
+ *
+ * Uses the same [SeriesListRow] as the library so both lists read as one surface. Row actions are
+ * swipes rather than buttons: swiping left asks to remove the run, swiping right adds the series to
+ * the library. Neither swipe actually dismisses the row — removal is confirmed in a dialog and the
+ * list rebuilds from the database, so the row springs back either way.
+ */
 @Composable
 fun HistoryItem(
-    history: HistoryWithRelations,
+    run: HistoryRun,
     onClickCover: () -> Unit,
     onClickResume: () -> Unit,
     onClickDelete: () -> Unit,
     onClickFavorite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .clickable(onClick = onClickResume)
-            .height(HistoryItemHeight)
-            .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        MangaCover.Book(
-            modifier = Modifier.fillMaxHeight(),
-            data = history.coverData,
-            onClick = onClickCover,
-        )
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = MaterialTheme.padding.medium, end = MaterialTheme.padding.small),
-        ) {
-            val textStyle = MaterialTheme.typography.bodyMedium
-            Text(
-                text = history.title,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = textStyle,
-            )
-            val readAt = remember { history.readAt?.toTimestampString() ?: "" }
-            Text(
-                text = if (history.chapterNumber > -1) {
-                    stringResource(
-                        MR.strings.recent_manga_time,
-                        formatChapterNumber(history.chapterNumber),
-                        readAt,
-                    )
-                } else {
-                    readAt
-                },
-                modifier = Modifier.padding(top = 4.dp),
-                style = textStyle,
-            )
-        }
-
-        if (!history.coverData.isMangaFavorite) {
-            IconButton(onClick = onClickFavorite) {
-                Icon(
-                    imageVector = Icons.Outlined.FavoriteBorder,
-                    contentDescription = stringResource(MR.strings.add_to_library),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
+    val canFavorite = !run.latest.coverData.isMangaFavorite
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            when (value) {
+                SwipeToDismissBoxValue.EndToStart -> onClickDelete()
+                SwipeToDismissBoxValue.StartToEnd -> onClickFavorite()
+                SwipeToDismissBoxValue.Settled -> Unit
             }
-        }
+            false
+        },
+    )
 
-        IconButton(onClick = onClickDelete) {
+    SwipeToDismissBox(
+        state = dismissState,
+        modifier = modifier,
+        enableDismissFromStartToEnd = canFavorite,
+        backgroundContent = { HistorySwipeBackground(dismissState.dismissDirection) },
+    ) {
+        SeriesListRow(
+            modifier = Modifier.background(MaterialTheme.colorScheme.background),
+            coverData = run.latest.coverData,
+            title = run.latest.title,
+            subtitle = chapterLabel(run),
+            caption = captionLabel(run),
+            onClick = onClickResume,
+            onClickCover = onClickCover,
+            onClickContinue = onClickResume,
+        )
+    }
+}
+
+@Composable
+private fun chapterLabel(run: HistoryRun): String = when {
+    run.latest.chapterNumber < 0 -> ""
+    run.isGrouped -> stringResource(
+        MR.strings.history_chapter_range,
+        formatChapterNumber(run.lowestChapterNumber),
+        formatChapterNumber(run.highestChapterNumber),
+    )
+    else -> stringResource(
+        MR.strings.history_chapter_single,
+        formatChapterNumber(run.latest.chapterNumber),
+    )
+}
+
+@Composable
+private fun captionLabel(run: HistoryRun): String {
+    val time = run.endedAt?.toTimestampString().orEmpty()
+    if (!run.isGrouped) return time
+    val count = pluralStringResource(MR.plurals.manga_num_chapters, run.size, run.size)
+    return if (time.isEmpty()) count else "$time  ·  $count"
+}
+
+@Composable
+private fun HistorySwipeBackground(direction: SwipeToDismissBoxValue) {
+    val isDelete = direction == SwipeToDismissBoxValue.EndToStart
+    val color = when (direction) {
+        SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+        SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+        SwipeToDismissBoxValue.Settled -> Color.Transparent
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color)
+            .padding(horizontal = MaterialTheme.padding.large),
+        contentAlignment = if (isDelete) Alignment.CenterEnd else Alignment.CenterStart,
+    ) {
+        if (direction != SwipeToDismissBoxValue.Settled) {
             Icon(
-                imageVector = Icons.Outlined.Delete,
-                contentDescription = stringResource(MR.strings.action_delete),
-                tint = MaterialTheme.colorScheme.onSurface,
+                imageVector = if (isDelete) Icons.Outlined.Delete else Icons.Outlined.FavoriteBorder,
+                contentDescription = stringResource(
+                    if (isDelete) MR.strings.action_delete else MR.strings.add_to_library,
+                ),
+                tint = if (isDelete) {
+                    MaterialTheme.colorScheme.onErrorContainer
+                } else {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                },
             )
         }
     }
@@ -113,7 +141,7 @@ private fun HistoryItemPreviews(
     TachiyomiPreviewTheme {
         Surface {
             HistoryItem(
-                history = historyWithRelations,
+                run = HistoryRun(listOf(historyWithRelations)),
                 onClickCover = {},
                 onClickResume = {},
                 onClickDelete = {},
