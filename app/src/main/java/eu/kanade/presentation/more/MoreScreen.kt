@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.Label
-import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.GetApp
 import androidx.compose.material.icons.outlined.QueryStats
@@ -51,7 +50,6 @@ fun SettingsListScreen(
     onClickCategories: () -> Unit,
     onClickStats: () -> Unit,
     onClickSettingsScreen: (VoyagerScreen) -> Unit,
-    onClickSupport: () -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
     val allItems = SettingsMainScreen.items
@@ -143,11 +141,8 @@ fun SettingsListScreen(
                             onPreferenceClick = { onClickSettingsScreen(item.screen) },
                         )
                     }
-                    TextPreferenceWidget(
-                        title = stringResource(MR.strings.label_support_us),
-                        icon = Icons.Default.VolunteerActivism,
-                        onPreferenceClick = onClickSupport,
-                    )
+                    // No "Support us": it fundraises for Mihon, which is misleading from inside
+                    // a fork they neither maintain nor are paid for.
                     TextPreferenceWidget(
                         title = stringResource(MR.strings.label_help),
                         icon = Icons.AutoMirrored.Outlined.HelpOutline,

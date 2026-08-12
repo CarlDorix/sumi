@@ -1,0 +1,59 @@
+// Draft patch for
+// app/src/main/java/eu/kanade/tachiyomi/ui/main/MainActivity.kt
+//
+// The existing setSplashScreenExitAnimation() only runs below Android 12
+// (Build.VERSION_CODES.S), because from 12 up the platform owns the splash.
+// The icon-swell handoff in the mock is an EXIT animation, so it has to run on
+// every version — drop the SDK guard and animate the provider's icon view.
+//
+// Replace the whole function with this:
+
+private fun setSplashScreenExitAnimation(splashScreen: SplashScreen?) {
+    val root = findViewById<View>(android.R.id.content)
+    if (splashScreen == null) return
+
+    window.statusBarColor = Color.TRANSPARENT
+    window.navigationBarColor = Color.TRANSPARENT
+
+    splashScreen.setOnExitAnimationListener { splashProvider ->
+        // The SplashScreen applies an (incorrect) Y translation to the iconView.
+        splashProvider.iconView.translationY = 0F
+
+        // The mark swells past the viewer and fades.
+        val iconAnim = ValueAnimator.ofFloat(0F, 1F).apply {
+            interpolator = FastOutSlowInInterpolator()
+            duration = SPLASH_EXIT_ANIM_DURATION
+            addUpdateListener { va ->
+                val t = va.animatedValue as Float
+                val scale = 1F + t * 8F
+                splashProvider.iconView.scaleX = scale
+                splashProvider.iconView.scaleY = scale
+                splashProvider.iconView.alpha = (1F - t * 2F).coerceAtLeast(0F)
+            }
+        }
+
+        // The splash paper fades out over the app, which rises the last few dp.
+        val splashAnim = ValueAnimator.ofFloat(1F, 0F).apply {
+            interpolator = FastOutSlowInInterpolator()
+            duration = SPLASH_EXIT_ANIM_DURATION
+            addUpdateListener { va ->
+                val value = va.animatedValue as Float
+                splashProvider.view.alpha = value
+                root.translationY = value * 16.dpToPx
+            }
+            doOnEnd { splashProvider.remove() }
+        }
+
+        iconAnim.start()
+        splashAnim.start()
+    }
+}
+
+// SPLASH_EXIT_ANIM_DURATION is already defined in this file; the mock's handoff
+// is ~850ms, so raise it if you want the full swell to read.
+//
+// NOT included: the iris/circle reveal of the app surface. The splash provider
+// gives you the splash view and the icon view, not a mask over the activity —
+// a true iris needs a Compose overlay in the app itself (an expanding
+// circle clip on the root, started once ready = true), which is a bigger change
+// than a splash patch. The alpha cross-fade above is the closest cheap read.

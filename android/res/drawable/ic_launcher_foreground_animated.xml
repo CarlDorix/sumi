@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Animatable copy of the launcher foreground: named path + named group so the AVD can target them. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:name="brush"
+        android:pathData="M36,36 C36,70 72,40 72,72"
+        android:strokeColor="#031019"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:trimPathEnd="0"/>
+    <group
+        android:name="seal"
+        android:pivotX="72"
+        android:pivotY="36"
+        android:scaleX="0"
+        android:scaleY="0">
+        <path
+            android:pathData="M67,36a5,5 0 1,0 10,0a5,5 0 1,0 -10,0z"
+            android:fillColor="#0058A0"/>
+    </group>
+</vector>

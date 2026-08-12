@@ -458,14 +458,10 @@ class MainActivity : BaseActivity() {
             }
         }
 
-        LaunchedEffect(Unit) {
-            try {
-                val firstInstallTime = packageManager.getPackageInfo(packageName, 0).firstInstallTime
-                val eligibleTime = Instant.fromEpochMilliseconds(firstInstallTime).plus(6 * 30.days)
-                showCampaign = (Clock.System.now() >= eligibleTime && !preferences.donationCampaignShown.get())
-            } catch (_: PackageManager.NameNotFoundException) {
-            }
-        }
+        // Never shown in Sumi. Upstream surfaces this after six months to ask users to fund
+        // Mihon — soliciting donations for another project from inside a fork would be
+        // misleading about who is being paid and who supports this build.
+        showCampaign = false
     }
 
     /**
@@ -477,38 +473,46 @@ class MainActivity : BaseActivity() {
     @Suppress("Deprecation")
     private fun setSplashScreenExitAnimation(splashScreen: SplashScreen?) {
         val root = findViewById<View>(android.R.id.content)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && splashScreen != null) {
-            window.statusBarColor = Color.TRANSPARENT
-            window.navigationBarColor = Color.TRANSPARENT
+        if (splashScreen == null) return
 
-            splashScreen.setOnExitAnimationListener { splashProvider ->
-                // For some reason the SplashScreen applies (incorrect) Y translation to the iconView
-                splashProvider.iconView.translationY = 0F
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
 
-                val activityAnim = ValueAnimator.ofFloat(1F, 0F).apply {
-                    interpolator = LinearOutSlowInInterpolator()
-                    duration = SPLASH_EXIT_ANIM_DURATION
-                    addUpdateListener { va ->
-                        val value = va.animatedValue as Float
-                        root.translationY = value * 16.dpToPx
-                    }
+        splashScreen.setOnExitAnimationListener { splashProvider ->
+            // For some reason the SplashScreen applies (incorrect) Y translation to the iconView
+            splashProvider.iconView.translationY = 0F
+
+            // The mark swells past the viewer and fades. This is an exit animation, so unlike
+            // upstream it runs on every version — from Android 12 the platform owns the splash
+            // itself, but the handoff out of it is still ours.
+            val iconAnim = ValueAnimator.ofFloat(0F, 1F).apply {
+                interpolator = FastOutSlowInInterpolator()
+                duration = SPLASH_EXIT_ANIM_DURATION
+                addUpdateListener { va ->
+                    val t = va.animatedValue as Float
+                    val scale = 1F + t * 8F
+                    splashProvider.iconView.scaleX = scale
+                    splashProvider.iconView.scaleY = scale
+                    splashProvider.iconView.alpha = (1F - t * 2F).coerceAtLeast(0F)
                 }
-
-                val splashAnim = ValueAnimator.ofFloat(1F, 0F).apply {
-                    interpolator = FastOutSlowInInterpolator()
-                    duration = SPLASH_EXIT_ANIM_DURATION
-                    addUpdateListener { va ->
-                        val value = va.animatedValue as Float
-                        splashProvider.view.alpha = value
-                    }
-                    doOnEnd {
-                        splashProvider.remove()
-                    }
-                }
-
-                activityAnim.start()
-                splashAnim.start()
             }
+
+            // The splash paper fades out over the app, which rises the last few dp.
+            val splashAnim = ValueAnimator.ofFloat(1F, 0F).apply {
+                interpolator = FastOutSlowInInterpolator()
+                duration = SPLASH_EXIT_ANIM_DURATION
+                addUpdateListener { va ->
+                    val value = va.animatedValue as Float
+                    splashProvider.view.alpha = value
+                    root.translationY = value * 16.dpToPx
+                }
+                doOnEnd {
+                    splashProvider.remove()
+                }
+            }
+
+            iconAnim.start()
+            splashAnim.start()
         }
     }
 

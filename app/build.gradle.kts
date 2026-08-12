@@ -32,8 +32,11 @@ android {
     defaultConfig {
         applicationId = "app.sumi"
 
-        versionCode = 29
-        versionName = "0.20.4"
+        // Sumi's own numbering, restarted rather than inherited from Mihon's 29 / 0.20.4.
+        // versionCode must only ever increase — Android refuses to install a build whose code is
+        // lower than the one already on the device.
+        versionCode = 1
+        versionName = "1.0.0"
 
         buildConfigField("String", "COMMIT_COUNT", "\"${getLatestCommitCount()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"${getLatestCommitSha()}\"")
