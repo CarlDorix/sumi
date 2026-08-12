@@ -6,6 +6,26 @@ than library management.
 This is not an official Mihon build and is not affiliated with the Mihon project. It exists because
 I wanted a different interface, not because anything was wrong with theirs.
 
+## Download
+
+**[Latest release](https://github.com/CarlDorix/sumi/releases/latest)** — grab
+`app-universal-release.apk` unless you know your device's CPU architecture, in which case
+`app-arm64-v8a-release.apk` is about a third the size and covers most phones from the last decade.
+
+Android will ask you to allow installing apps from wherever you downloaded it, and Play Protect will
+warn that the developer isn't recognised. Both are normal for any app not distributed through the
+Play Store.
+
+Sumi installs alongside Mihon rather than replacing it — different application ID — so you can try
+it without giving anything up. Back up from Mihon first
+(**Settings → Data and storage → Create backup**) and restore into Sumi; the format is shared.
+
+## Getting started
+
+New to this kind of app? **[Read the getting started guide](docs/getting-started.md)** — the short
+version is that Sumi ships with no sources, and adding an extension repository is the first thing
+you need to do.
+
 ## What's different
 
 **Three navigation destinations instead of five** — Home, Search, Settings — behind a floating

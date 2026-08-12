@@ -34,13 +34,9 @@ class AppUpdateChecker {
     }
 }
 
-val GITHUB_REPO: String by lazy {
-    if (isPreviewBuildType) {
-        "mihonapp/mihon-preview"
-    } else {
-        "mihonapp/mihon"
-    }
-}
+// Sumi's own repo. Left pointing at mihonapp, "What's new" and any update check would offer
+// Mihon's releases — which would replace this build with a different app entirely.
+val GITHUB_REPO: String by lazy { "CarlDorix/sumi" }
 
 val RELEASE_TAG: String by lazy {
     if (isPreviewBuildType) {

@@ -51,6 +51,8 @@
     <string name="home_tab_downloaded">Downloaded</string>
     <string name="home_tab_genres">Genres</string>
     <string name="library_sort_and_display">Sort and display</string>
+    <string name="about_credit_upstream">Built on Mihon</string>
+    <string name="about_credit_upstream_summary">Sumi's reader, sources and backups are Mihon's work</string>
     <string name="genre_in_your_library">In your library</string>
     <string name="genre_browse">Browse by genre</string>
     <string name="home_jump_back_in">Jump back in</string>

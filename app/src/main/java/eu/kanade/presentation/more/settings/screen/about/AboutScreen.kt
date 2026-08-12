@@ -63,6 +63,9 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.time.Instant
 
+// Sumi's own repo; upstream's About linked to mihonapp everywhere.
+private const val SUMI_REPO_URL = "https://github.com/CarlDorix/sumi"
+
 object AboutScreen : Screen() {
 
     @Composable
@@ -158,12 +161,8 @@ object AboutScreen : Screen() {
                     )
                 }
 
-                item {
-                    TextPreferenceWidget(
-                        title = stringResource(MR.strings.privacy_policy),
-                        onPreferenceClick = { uriHandler.openUri("https://mihon.app/privacy/") },
-                    )
-                }
+                // No privacy policy link: Mihon's describes Mihon's project, not this fork, and
+                // claiming it as Sumi's would be a false statement about how your data is handled.
 
                 item {
                     Row(
@@ -172,37 +171,28 @@ object AboutScreen : Screen() {
                             .padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.Center,
                     ) {
-                        LinkIcon(
-                            label = stringResource(MR.strings.website),
-                            icon = Icons.Outlined.Public,
-                            url = "https://mihon.app",
-                        )
-                        LinkIcon(
-                            label = "Discord",
-                            icon = CustomIcons.Discord,
-                            url = Constants.URL_DISCORD,
-                        )
-                        LinkIcon(
-                            label = "X",
-                            icon = CustomIcons.X,
-                            url = "https://x.com/mihonapp",
-                        )
-                        LinkIcon(
-                            label = "Facebook",
-                            icon = CustomIcons.Facebook,
-                            url = "https://facebook.com/mihonapp",
-                        )
-                        LinkIcon(
-                            label = "Reddit",
-                            icon = CustomIcons.Reddit,
-                            url = "https://www.reddit.com/r/mihonapp",
-                        )
+                        // Sumi has no website or social accounts, so only the two links that
+                        // actually lead somewhere useful remain. Upstream's X, Facebook, Reddit
+                        // and website all pointed at Mihon.
                         LinkIcon(
                             label = "GitHub",
                             icon = CustomIcons.Github,
-                            url = "https://github.com/mihonapp",
+                            url = SUMI_REPO_URL,
+                        )
+                        LinkIcon(
+                            label = stringResource(MR.strings.label_help),
+                            icon = Icons.Outlined.Public,
+                            url = Constants.URL_DISCORD,
                         )
                     }
+                }
+
+                item {
+                    TextPreferenceWidget(
+                        title = stringResource(MR.strings.about_credit_upstream),
+                        subtitle = stringResource(MR.strings.about_credit_upstream_summary),
+                        onPreferenceClick = { uriHandler.openUri("https://github.com/mihonapp/mihon") },
+                    )
                 }
             }
         }
