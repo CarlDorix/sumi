@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.components.material.LocalFloatingNavBarPadding
 import tachiyomi.presentation.core.i18n.stringResource
 import androidx.compose.runtime.LaunchedEffect as ComposeLaunchedEffect
 
@@ -119,7 +120,7 @@ data object HomeTab : Tab {
                     4 -> FilterPage(filterViewModel.downloaded(library), navigator, filterViewModel)
                     5 -> GenreIndexScreen(
                         genres = remember(library) { filterViewModel.genreIndex(library) },
-                        contentPadding = PaddingValues(bottom = 16.dp),
+                        contentPadding = PaddingValues(bottom = LocalFloatingNavBarPadding.current + 16.dp),
                         onClickGenre = { navigator.push(GenreScreen(it)) },
                     )
                     else -> HistoryTab.Content()
@@ -137,7 +138,7 @@ private fun FilterPage(
 ) {
     LibraryFilterScreen(
         entries = entries,
-        contentPadding = PaddingValues(bottom = 16.dp),
+        contentPadding = PaddingValues(bottom = LocalFloatingNavBarPadding.current + 16.dp),
         onClick = { navigator.push(MangaScreen(it.manga.id)) },
         onClickContinue = { viewModel.openNextChapter(it.manga.id) },
     )
@@ -152,7 +153,7 @@ private fun RecentPage() {
 
     RecentScreen(
         history = state.list,
-        contentPadding = PaddingValues(bottom = 16.dp),
+        contentPadding = PaddingValues(bottom = LocalFloatingNavBarPadding.current + 16.dp),
         onClickCover = { navigator.push(MangaScreen(it.mangaId)) },
         onClickResume = { viewModel.getNextChapterForManga(it.mangaId, it.chapterId) },
     )

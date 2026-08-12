@@ -7,14 +7,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,6 +37,9 @@ import tachiyomi.domain.manga.model.MangaCover as MangaCoverModel
 
 val SeriesListRowHeight = 104.dp
 private val ContinueButtonWidth = 96.dp
+
+/** Book cover proportions; the row's cover Box is sized to this so nothing else can stretch it. */
+private const val CoverAspectRatio = 2f / 3f
 
 /**
  * One series in a vertical list: cover, title, a chapter line, a muted caption, and an optional
@@ -70,9 +76,16 @@ fun SeriesListRow(
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box {
+            // Sized to the cover explicitly. Without the aspectRatio the Box takes the row's full
+            // available width — ReadProgressBar fills its parent, the Box grows to match, and the
+            // title column and action get squeezed out of the row entirely.
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .aspectRatio(CoverAspectRatio),
+            ) {
                 MangaCoverComposable.Book(
-                    modifier = Modifier.fillMaxHeight(),
+                    modifier = Modifier.fillMaxSize(),
                     data = coverData,
                     onClick = onClickCover,
                 )
