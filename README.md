@@ -1,86 +1,62 @@
-<div align="center">
+# Sumi
 
-<a href="https://mihon.app">
-    <img src="./.github/assets/logo.png" alt="Mihon logo" title="Mihon logo" width="80"/>
-</a>
+A personal fork of [Mihon](https://github.com/mihonapp/mihon), reorganised around reading rather
+than library management.
 
-# Mihon [App](#)
+This is not an official Mihon build and is not affiliated with the Mihon project. It exists because
+I wanted a different interface, not because anything was wrong with theirs.
 
-### Full-featured reader
-Discover and read manga, webtoons, comics, and more – easier than ever on your Android device.
+## What's different
 
-[![Discord server](https://img.shields.io/discord/1195734228319617024.svg?label=&labelColor=6A7EC2&color=7389D8&logo=discord&logoColor=FFFFFF)](https://discord.gg/mihon)
-[![GitHub downloads](https://img.shields.io/github/downloads/mihonapp/mihon/total?label=downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://mihon.app/download)
+**Three navigation destinations instead of five** — Home, Search, Settings — behind a floating
+translucent bar that content scrolls beneath.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/mihonapp/mihon/build.yml?labelColor=27303D)](https://github.com/mihonapp/mihon/actions/workflows/build_push.yml)
-[![License: Apache-2.0](https://img.shields.io/github/license/mihonapp/mihon?labelColor=27303D&color=0877d2)](/LICENSE)
-[![Translation status](https://img.shields.io/weblate/progress/mihon?labelColor=27303D&color=946300)](https://hosted.weblate.org/engage/mihon/)
+**Home** collects everything you'd reach for while reading, as one row of tabs:
 
-## Download
+| Tab | What it shows |
+|---|---|
+| Recent | Reading feed built from history, with a cover shelf and continue-reading list |
+| Library | The full library, with a hero card and wide featured tiles |
+| Unread | Entries with chapters left |
+| Finished | Started and caught up |
+| Downloaded | Entries with downloaded chapters |
+| Genres | Every genre in your library, with counts |
+| History | Chapter runs grouped into single rows, with swipe actions |
 
-[![Mihon Stable](https://img.shields.io/github/release/mihonapp/mihon.svg?maxAge=3600&label=Stable&labelColor=06599d&color=043b69)](https://mihon.app/download)
-[![Mihon Beta](https://img.shields.io/github/v/release/mihonapp/mihon-preview.svg?maxAge=3600&label=Beta&labelColor=2c2c47&color=1c1c39)](https://mihon.app/download)
+**Search** is search-first: an inline field rather than a magnifier, a popular shelf from a source
+you choose, persisted recent searches, and source and genre chips. Sources, extensions and
+migration moved behind the overflow — they're destinations, not scenery.
 
-*Requires Android 8.0 or higher.*
+**Settings** puts library toggles and actions above the settings categories, all in grouped cards,
+with every settings screen rendering its groups the same way.
 
-## Features
+**Manga details** lead with the entry's own artwork, show read progress, and distinguish read from
+unread chapters by weight rather than dimming alone.
 
-<div align="left">
+Also: an **Ember** theme (warm, high contrast), read-progress bars throughout, and a shared
+component set so the lists, headers and chips stay consistent.
 
-* Local reading of content.
-* A configurable reader with multiple viewers, reading directions and other settings.
-* Tracker support: [MangaBaka](https://mangabaka.org), [MyAnimeList](https://myanimelist.net/), [AniList](https://anilist.co/), [Kitsu](https://kitsu.app/), [MangaUpdates](https://mangaupdates.com), [Shikimori](https://shikimori.one), [Bangumi](https://bgm.tv/), and [Hikka](https://hikka.io/) support.
-* Categories to organize your library.
-* Light and dark themes.
-* Schedule updating your library for new chapters.
-* Create backups locally to read offline or to your desired cloud service.
-* Plus much more...
+## Content
 
-</div>
+Like Mihon, Sumi ships with **no sources and no content**. It reads what you point it at through
+extensions you install yourself. Nothing is bundled, hosted or distributed here.
 
-## Contributing
+## Building
 
-[Code of conduct](./CODE_OF_CONDUCT.md) · [Contributing guide](./CONTRIBUTING.md)
+Standard Android project — open in Android Studio and run, or:
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+```bash
+./gradlew installDebug
+```
 
-Before reporting a new issue, take a look at the [FAQ](https://mihon.app/docs/faq/general), the [changelog](https://mihon.app/changelogs/) and the already opened [issues](https://github.com/mihonapp/mihon/issues); if you got any questions, join our [Discord server](https://discord.gg/mihon).
+Requires JDK 17+ (the build provisions its own toolchain) and the Android SDK.
 
+## Credit and licence
 
-### Repositories
+Sumi is built on Mihon, which is built on Tachiyomi. Essentially all of the engine — the source
+API, reader, downloader, database and sync — is their work; this fork mostly rewrites the
+presentation layer.
 
-[![mihonapp/website - GitHub](https://github-stats-extended.vercel.app/api/pin/?username=mihonapp&repo=website&bg_color=161B22&text_color=c9d1d9&title_color=0877d2&icon_color=0877d2&border_radius=8&hide_border=true&description_lines_count=2)](https://github.com/mihonapp/website/)
-[![mihonapp/bitmap.kt - GitHub](https://github-stats-extended.vercel.app/api/pin/?username=mihonapp&repo=bitmap.kt&bg_color=161B22&text_color=c9d1d9&title_color=0877d2&icon_color=0877d2&border_radius=8&hide_border=true&description_lines_count=2)](https://github.com/mihonapp/bitmap.kt/)
-
-### Credits
-
-Thank you to all the people who have contributed!
-
-<a href="https://github.com/mihonapp/mihon/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=mihonapp/mihon" alt="Mihon app contributors" title="Mihon app contributors" width="800"/>
-</a>
-
-### Disclaimer
-
-The developer(s) of this application does not have any affiliation with the content providers available, and this application hosts zero content.
-
-### License
-
-<pre>
-Copyright © 2015 Javier Tomás
-Copyright © 2024 Mihon Open Source Project
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-</pre>
-
-</div>
+Licensed under [Apache 2.0](LICENSE), as Mihon is. See the [Mihon repository](https://github.com/mihonapp/mihon)
+for the upstream project, and please direct issues about the underlying app there only if you can
+reproduce them on an official Mihon build.
