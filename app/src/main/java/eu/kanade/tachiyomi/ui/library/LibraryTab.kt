@@ -43,6 +43,7 @@ import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.manga.MangaScreen
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
+import eu.kanade.tachiyomi.util.system.copyToClipboard
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -105,6 +106,26 @@ data object LibraryTab : Tab {
             started
         }
 
+        val onClickGetLibraryList: () -> Unit = {
+            val mangaList = state.libraryData.favorites
+                .map { it.libraryManga.manga.title }
+                .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
+                .joinToString("\n")
+
+            if (mangaList.isNotBlank()) {
+                context.copyToClipboard(
+                    context.stringResource(MR.strings.library_list),
+                    mangaList,
+                )
+            } else {
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        context.stringResource(MR.strings.information_no_entries_found),
+                    )
+                }
+            }
+        }
+
         Scaffold(
             topBar = { scrollBehavior ->
                 val title = state.getToolbarTitle(
@@ -134,6 +155,7 @@ data object LibraryTab : Tab {
                             }
                         }
                     },
+                    onClickGetLibraryList = onClickGetLibraryList,
                     searchQuery = state.searchQuery,
                     onSearchQueryChange = viewModel::search,
                     // For scroll overlay when no tab

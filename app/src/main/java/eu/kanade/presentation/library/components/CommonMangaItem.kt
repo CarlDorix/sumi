@@ -189,6 +189,7 @@ fun MangaComfortableGridItem(
     onLongClick: () -> Unit,
     isSelected: Boolean = false,
     titleMaxLines: Int = 2,
+    subtitle: String? = null,
     coverAlpha: Float = 1f,
     readProgress: Float? = null,
     coverBadgeStart: (@Composable RowScope.() -> Unit)? = null,
@@ -227,12 +228,23 @@ fun MangaComfortableGridItem(
                 },
             )
             GridItemTitle(
-                modifier = Modifier.padding(4.dp),
+                modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 4.dp),
                 title = title,
                 style = MaterialTheme.typography.titleSmall,
                 minLines = 2,
                 maxLines = titleMaxLines,
             )
+            // Comfortable has room Compact doesn't, so it carries context Compact can't.
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
